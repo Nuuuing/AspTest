@@ -1,0 +1,83 @@
+# Visual Studio 관련 파일
+.vs
+.vscode
+.user
+.suo
+.userosscache
+.sln.docstates
+
+# 빌드 출력 디렉터리
+bin
+obj
+out
+
+# .NET Core 관련 파일
+project.lock.json
+project.fragment.lock.json
+artifacts
+
+# NuGet 패키지
+.nupkg
+.snupkg
+.nuget
+packages
+.nuget
+
+# 사용자 설정 파일
+.csproj.user
+.vcxproj.user
+.code-workspace
+
+# 로그 및 임시 파일
+.log
+.tlog
+.logfile
+.stackdump
+.ide.log
+.pidb
+.temp
+.tmp
+.tmp 
+
+# 데이터베이스 파일
+.db
+.mdf
+.ldf
+.sqlite
+
+# Resharper 파일
+_ReSharper
+.DotSettings.user
+
+# Rider 파일
+.idea
+.idea_modules
+
+# JetBrains Rider Unity plugin
+.unity
+.idea.UnityGenerated
+
+# Mac 관련 파일
+.DS_Store
+
+# Windows 관련 파일
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# 기타
+.bak
+.swp
+.lock
+.old
+.orig
+.rej
+.diff
+.patch
+.tlog
+.cache
+.lintcache
+.eslintcache
+_Compile.skip
+.css.map
+.js.map
