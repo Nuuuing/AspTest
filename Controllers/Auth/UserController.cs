@@ -6,17 +6,22 @@ using System.Text;
 
 [ApiController]
 [Route("[controller]")]
-public class AuthController : ControllerBase {
+public class UserController : ControllerBase {
     private readonly string _jwtKey = "blueseekers_0703_my_little_ocean_story"; // JWT 비밀 키
-    private readonly string _issuer = "http://localhost:7122"; // 발행자 (프로토콜 포함)
-    private readonly string _audience = "http://localhost:7122"; // 대상자 (프로토콜 포함)
+    private readonly string _issuer = "http://localhost:7122";
+    private readonly string _audience = "http://localhost:7122";
+
+    private readonly IUserService _userService;
+
+    public UserController(IUserService userService) {
+        _userService = userService;
+    }
 
     [HttpPost("login")]
     public IActionResult Login([FromBody] LoginRequest request) {
-        // 사용자 인증 로직 (예: 데이터베이스 검증)
         if (request.Username == "test" && request.Password == "password") {
             // Access Token 생성
-            var accessToken = GenerateToken(request.Username, TimeSpan.FromMinutes(15)); // 유효기간 15분
+            var accessToken = GenerateToken(request.Username, TimeSpan.FromMinutes(30)); // 유효기간 30분
 
             // Refresh Token 생성
             var refreshToken = GenerateToken(request.Username, TimeSpan.FromDays(7)); // 유효기간 7일
@@ -49,7 +54,7 @@ public class AuthController : ControllerBase {
 
             // Refresh Token이 유효하면 새로운 Access Token 생성
             var username = principal.Identity?.Name; // 사용자 이름 가져오기
-            var newAccessToken = GenerateToken(username, TimeSpan.FromMinutes(15)); // 새로운 Access Token 발급
+            var newAccessToken = GenerateToken(username, TimeSpan.FromMinutes(30)); // 새로운 Access Token 발급 - 60분
 
             return Ok(new {
                 AccessToken = newAccessToken
@@ -81,6 +86,24 @@ public class AuthController : ControllerBase {
         var token = tokenHandler.CreateToken(tokenDescriptor);
         return tokenHandler.WriteToken(token);
     }
+
+    [HttpPost("signup")]
+    public IActionResult CreateUser([FromBody] UserCreateDto userCreateDto) {
+        if (userCreateDto.userId.IsNullOrEmpty()) {
+            return BadRequest("No information exists");
+        }
+        try {
+            int createUser = _userService.CreateUser(userCreateDto);
+            if (createUser > 0)
+                return Ok(new { message = "User created successfully." });
+            else
+                return StatusCode(500, new { message = "Failed to create user." });
+        }
+        catch (Exception e) {
+            return BadRequest(new { error = e.Message });
+        }
+    }
+
 }
 
 // 로그인 요청 DTO

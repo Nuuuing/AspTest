@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using MySql.Data.MySqlClient; // MySQL Connector 사용
 using MySqlConnector;
 using System.Data;
 using System.Text;
@@ -13,6 +12,9 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 
 // 서비스 등록
 ConfigureServices(builder.Services, jwtKey, connectionString);
+
+// 모듈 등록
+builder.Services.AddUserModule(connectionString);
 
 // 애플리케이션 빌드
 var app = builder.Build();
@@ -31,6 +33,18 @@ void ConfigureServices(IServiceCollection services, string jwtKey, string connec
     // Swagger(OpenAPI) 설정
     services.AddEndpointsApiExplorer();
     services.AddSwaggerGen(c => {
+        c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo {
+            Title = "MyLIO API",
+            Version = "v1",
+            Description = "This is the API documentation for MyLIO.",
+            Contact = new Microsoft.OpenApi.Models.OpenApiContact {
+                Name = "Support Team",
+                Email = "support@mylio.com",
+                Url = new Uri("https://mylio.com/contact")
+            }
+        });
+
+        // JWT 인증 설정 추가
         c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme {
             Name = "Authorization",
             Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
@@ -70,17 +84,17 @@ void ConfigureServices(IServiceCollection services, string jwtKey, string connec
                 IssuerSigningKey = new SymmetricSecurityKey(key)
             };
             options.Events = new JwtBearerEvents {
-                OnChallenge = context => {
+                OnChallenge = async context => {
                     context.HandleResponse();
                     context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                     context.Response.ContentType = "application/json";
-                    return context.Response.WriteAsync("{\"error\": \"Token is invalid or missing\"}");
+                    await context.Response.WriteAsync("{\"error\": \"Token is invalid or missing\"}");
                 }
             };
         });
 
     // MySQL용 DB 연결 설정
-    services.AddScoped<IDbConnection>(sp => new MySqlConnection(connectionString));
+    services.AddScoped<IDbConnection>(_ => new MySqlConnection(connectionString));
 
     // 기타 서비스 등록
     services.AddSingleton<LoggingService>();
@@ -88,10 +102,10 @@ void ConfigureServices(IServiceCollection services, string jwtKey, string connec
 
     // CORS 설정
     services.AddCors(options => {
-        options.AddDefaultPolicy(builder => {
-            builder.WithOrigins("http://localhost:3000")
-                   .AllowAnyHeader()
-                   .AllowAnyMethod();
+        options.AddDefaultPolicy(policy => {
+            policy.WithOrigins("http://localhost:3000")
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
         });
     });
 
@@ -111,7 +125,7 @@ void ConfigureMiddleware(WebApplication app) {
         app.UseSwagger();
         app.UseSwaggerUI(c => {
             c.SwaggerEndpoint("/swagger/v1/swagger.json", "MyLIO API V1");
-            c.RoutePrefix = "";
+            c.RoutePrefix = string.Empty; // Swagger UI를 기본 경로에 표시
         });
     }
 
